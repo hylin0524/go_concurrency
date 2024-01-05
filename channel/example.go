@@ -20,11 +20,15 @@ func UnbufferedChan() {
 	// pull from queue
 	for {
 		select {
-		case b := <-queue:
+		case b, ok := <-queue:
+			if !ok {
+				fmt.Println("channel closed")
+				return
+			}
 			fmt.Println(b)
 			if b == 10 {
-				fmt.Println("got exit signal")
-				return
+				fmt.Println("got exit signal, closing queue")
+				close(queue)
 			}
 		}
 	}
@@ -46,7 +50,7 @@ func BufferedChan() {
 	}()
 
 	for {
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
 		select {
 		case v, ok := <-queue:
 			if !ok { // the condition of exit infinite-loop
@@ -60,6 +64,61 @@ func BufferedChan() {
 	}
 }
 
-func main() {
+func BufferedChanPullBlocked() {
+	intChan := make(chan int, 1)
 
+	go func() {
+		for {
+			time.Sleep(time.Second * 10)
+			intChan <- rand.Intn(10)
+		}
+	}()
+
+	for {
+		select {
+		case v := <-intChan:
+			fmt.Println(v) // Blocking, wait data push to channel
+		}
+	}
+}
+
+func BufferedChanPushBlocked() {
+	intChan := make(chan int, 1)
+
+	go func() {
+		for {
+			intChan <- rand.Intn(10) // Blocking, wait data pull from channel
+		}
+	}()
+
+	for {
+		select {
+		case v := <-intChan:
+			fmt.Println(v)
+			time.Sleep(time.Second * 10)
+		}
+	}
+}
+
+func BufferedChanUnblocked() {
+	intChan := make(chan int, 1)
+	go func() {
+		for i := 0; i < 10; i++ {
+			intChan <- i
+			fmt.Println("pushing", i)
+			sec := rand.Intn(5)
+			sp := time.Duration(sec) * (time.Second)
+			time.Sleep(sp)
+
+		}
+		close(intChan)
+	}()
+
+	for {
+		fmt.Println(<-intChan) //cannot stop, should check channel is closed via select case.
+	}
+}
+
+func main() {
+	BufferedChanUnblocked()
 }
