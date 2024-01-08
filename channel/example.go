@@ -34,6 +34,27 @@ func UnbufferedChan() {
 	}
 }
 
+// UnbufferedChanTest
+// If the channel is unbuffered, the sender blocks until the receiver has received the value.
+func UnbufferedChanTest() {
+	fmt.Println("process start @", time.Now())
+	intChan := make(chan int)
+
+	go func() {
+		for {
+			val := rand.Intn(100)
+			time.Sleep(time.Second * 3)
+			intChan <- val
+			fmt.Printf("[%v] pushing value:%d\n", time.Now(), val)
+		}
+	}()
+
+	for {
+		v := <-intChan // block, because nothing pushed into queue.
+		fmt.Printf("[%v] received value:%d\n", time.Now(), v)
+	}
+}
+
 /*
 	Buffered Channel
 	Q1: 什麼情況下可以在長度有限的queue下塞入超過長度的message。例如：channel長度為10, 但我有100筆資料要處理 ?
@@ -120,5 +141,5 @@ func BufferedChanUnblocked() {
 }
 
 func main() {
-	BufferedChanUnblocked()
+	UnbufferedChanTest()
 }

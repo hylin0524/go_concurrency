@@ -13,18 +13,19 @@ import (
 
 const maxGoroutine = 10
 
-func printer(i int) {
-	fmt.Println("handling with number:", i)
-	time.Sleep(time.Second) // mock api server response time
+func printer(i, worker int) {
+	r := i % 10
+	time.Sleep(time.Second * time.Duration(r))                                                        // mock api server response time
+	fmt.Printf("processing number [number %d] on [worker %d] at [time %v] \n", i, worker, time.Now()) // mock api processed result
 }
 
-func main() {
-	intChan := make(chan int)
+func ChanWithWaitGroup() {
+	intChan := make(chan int, 20)
 	var wg sync.WaitGroup
 
 	wg.Add(maxGoroutine) // limit goroutines
 	for i := 0; i < maxGoroutine; i++ {
-		go func() {
+		go func(w int) {
 			defer wg.Done()
 			// infinite loop and pull value from channel every goroutine
 			for {
@@ -32,9 +33,9 @@ func main() {
 				if !ok { // if there is no job then exit the loop
 					return
 				}
-				printer(v)
+				printer(v, w)
 			}
-		}()
+		}(i)
 	}
 
 	for j := 0; j < 100; j++ { // mock total jobs
@@ -43,4 +44,8 @@ func main() {
 
 	close(intChan)
 	wg.Wait()
+}
+
+func main() {
+	ChanWithWaitGroup()
 }
