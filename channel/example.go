@@ -6,32 +6,36 @@ import (
 	"time"
 )
 
-func UnbufferedChan() {
+// UnbufferedChanBug1 close channel on receiver side
+// that would get an error: `panic: send on closed channel`
+// best practice, should close channel on Sender side
+func UnbufferedChanBug1() {
 	queue := make(chan int)
 
-	// push to queue
+	// pull from queue
 	go func() {
 		for {
-			time.Sleep(time.Millisecond * 200)
-			queue <- rand.Intn(11)
+			select {
+			case b, ok := <-queue:
+				if !ok {
+					fmt.Println("channel closed")
+					return
+				}
+				fmt.Println(b)
+				if b == 10 {
+					fmt.Println("got exit signal, closing queue")
+					close(queue)
+				}
+			}
 		}
 	}()
 
-	// pull from queue
+	// push to queue
 	for {
-		select {
-		case b, ok := <-queue:
-			if !ok {
-				fmt.Println("channel closed")
-				return
-			}
-			fmt.Println(b)
-			if b == 10 {
-				fmt.Println("got exit signal, closing queue")
-				close(queue)
-			}
-		}
+		time.Sleep(time.Millisecond * 500)
+		queue <- rand.Intn(11) // panic: send on closed channel
 	}
+
 }
 
 // UnbufferedChanTest
@@ -57,7 +61,11 @@ func UnbufferedChanTest() {
 
 /*
 	Buffered Channel
-	Q1: 什麼情況下可以在長度有限的queue下塞入超過長度的message。例如：channel長度為10, 但我有100筆資料要處理 ?
+	Q: 什麼情況下可以在長度有限的queue下塞入超過長度的message。例如：channel長度為10, 但我有100筆資料要處理 ?
+	A: 使用unbuffered channel
+
+	Q: buffered channel是blocking還是non-blocking ?
+	A: 在channel未達到上限值時是後者，若已達到上限值則是前者
 */
 
 func BufferedChan() {
@@ -141,5 +149,5 @@ func BufferedChanUnblocked() {
 }
 
 func main() {
-	UnbufferedChanTest()
+	UnbufferedChanBug1()
 }
