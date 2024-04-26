@@ -1,3 +1,6 @@
+## Description
+  this is playground for golang concurrent mechanism(wait-group, channel)
+
 ### Initial Project 
 
 ```shell
