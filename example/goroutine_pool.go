@@ -27,7 +27,7 @@ func ChanWithWaitGroup() {
 	for i := 0; i < maxGoroutine; i++ {
 		go func(w int) {
 			defer wg.Done()
-			// infinite loop and pull value from channel every goroutine
+			// infinite loop -> the wg would keep pull data until receive a close signal
 			for {
 				v, ok := <-intChan
 				if !ok { // if there is no job then exit the loop
