@@ -6,10 +6,10 @@ import (
 )
 
 /*
-	- unbuffered channel is blocking method
-	- buffered channel is non-blocking
-		- when pulling empty chan -> blocking
-		- when pushing full chan-> blocking
+	- unbuffered channel is blocking method until both sender & receiver ready.
+	- buffered channel is non-blocking until ...
+		- pulling from empty chan -> blocking
+		- pushing to full chan -> blocking
 */
 
 func BufferedChanDeadLock() {
@@ -50,8 +50,8 @@ func UnbufferedChanDeadLock() {
 	queue <- 1
 
 	result := <-queue * 3 * 4 // Deadlock!
-	// because unbuffered queue is blocking
-	// there are 2 actions push & pull run at single routine, they would block each other, we should run push action in a goroutine
+	// because unbuffered queue is blocking method
+	// when push & pull run on same routine, they would block each other, we should run push action in a goroutine
 	fmt.Println("result:", result)
 }
 
